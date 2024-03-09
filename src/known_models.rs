@@ -21,7 +21,10 @@ pub const KNOWN_MODELS: &str = r####"
                 "starcoder/7b/vllm",
                 "starcoder2/3b/base",
                 "starcoder2/7b/base",
-                "starcoder2/15b/base"
+                "starcoder2/15b/base",
+                "starcoder2/3b/vllm",
+                "starcoder2/7b/vllm",
+                "starcoder2/15b/vllm"
             ]
         },
         "smallcloudai/Refact-1_6B-fim": {
@@ -227,7 +230,8 @@ pub const KNOWN_MODELS: &str = r####"
             },
             "similar_models": [
                 "deepseek-coder/33b/instruct",
-                "deepseek-coder/6.7b/instruct-finetune"
+                "deepseek-coder/6.7b/instruct-finetune",
+                "deepseek-coder/6.7b/instruct-finetune/vllm"
             ]
         }
     }
