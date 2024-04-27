@@ -1,4 +1,4 @@
-use tracing::{info, error};
+use tracing::{info, warn, error};
 use serde::Deserialize;
 use serde::Serialize;
 use std::fs::File;
@@ -56,6 +56,8 @@ pub struct CodeAssistantCaps {
     pub code_chat_models: HashMap<String, ModelRecord>,
     pub code_chat_default_model: String,
     #[serde(default)]
+    pub models_dict_patch: HashMap<String, ModelRecord>,
+    #[serde(default)]
     pub default_embeddings_model: String,
     #[serde(default)]
     pub endpoint_embeddings_template: String,
@@ -95,7 +97,7 @@ pub async fn load_caps(
             caps_urls.push(cmdline.address_url.clone());
         }
     }
-    let mut caps_url: String = match caps_urls.get(0) {
+    let caps_url: String = match caps_urls.get(0) {
         Some(u) => u.clone(),
         None => return Err("caps_url is none".to_string())
     };
@@ -110,13 +112,13 @@ pub async fn load_caps(
     if !api_key.is_empty() {
         headers.insert(reqwest::header::AUTHORIZATION, reqwest::header::HeaderValue::from_str(format!("Bearer {}", api_key).as_str()).unwrap());
     }
-
     let mut r1_mb: Option<CodeAssistantCaps> = None;
     let mut r1_mb_error_text = "".to_string();
 
     if is_remote_address {
         let mut status: u16 = 0;
         for url in caps_urls.iter() {
+            info!("fetching caps from {}", url);
             let response = http_client.get(url).headers(headers.clone()).send().await.map_err(|e| format!("{}", e))?;
             status = response.status().as_u16();
             buffer = match response.text().await {
@@ -135,7 +137,6 @@ pub async fn load_caps(
                 }
             };
             if r1_mb.is_some() {
-                info!("reading caps from {}", url);
                 break
             }
         }
@@ -151,6 +152,7 @@ pub async fn load_caps(
         format!("failed to parse KNOWN_MODELS: {}", e)
     })?;
     _inherit_r1_from_r0(&mut r1, &r0);
+    apply_models_dict_patch(&mut r1);
     r1.endpoint_template = relative_to_full_url(&caps_url, &r1.endpoint_template)?;
     r1.endpoint_chat_passthrough = relative_to_full_url(&caps_url, &r1.endpoint_chat_passthrough)?;
     r1.telemetry_basic_dest = relative_to_full_url(&caps_url, &r1.telemetry_basic_dest)?;
@@ -187,10 +189,29 @@ fn relative_to_full_url(
     }
 }
 
+fn apply_models_dict_patch(caps: &mut CodeAssistantCaps) {
+    fn apply_model_record_patch(rec: &mut ModelRecord, rec_patched: &ModelRecord) {
+        // for now applying just n_ctx
+        if rec_patched.n_ctx != usize::default() {
+            rec.n_ctx = rec_patched.n_ctx;
+        }
+    }
+
+    for (model, rec_patched) in caps.models_dict_patch.iter() {
+        if let Some(rec) = caps.code_completion_models.get_mut(model) {
+            apply_model_record_patch(rec, rec_patched);
+        }
+        if let Some(rec) = caps.code_chat_models.get_mut(model) {
+            apply_model_record_patch(rec, rec_patched);
+        }
+    }
+}
+ 
 fn _inherit_r1_from_r0(
     r1: &mut CodeAssistantCaps,
     r0: &ModelsOnly,
 ) {
+    // XXX: only patches running models, patch all?
     for k in r1.running_models.iter() {
         let k_stripped = strip_model_from_finetune(k);
 
@@ -208,8 +229,8 @@ fn _inherit_r1_from_r0(
     }
 
     for k in r1.running_models.iter() {
-        if !r1.code_completion_models.contains_key(k) && !r1.code_chat_models.contains_key(k) {
-            info!("indicated as running, unknown model {}", k);
+        if !r1.code_completion_models.contains_key(k) && !r1.code_chat_models.contains_key(k) && *k != r1.default_embeddings_model {
+            warn!("indicated as running, unknown model {:?}, maybe update this rust binary", k);
         }
     }
 
