@@ -12,9 +12,35 @@ use crate::global_context::GlobalContext;
 use crate::scratchpad_abstract::HasTokenizerAndEot;
 use crate::scratchpad_abstract::ScratchpadAbstract;
 use crate::scratchpads::chat_utils_limit_history::limit_messages_history;
-use crate::scratchpads::chat_utils_rag::{run_at_commands, HasVecdbResults};
+use crate::scratchpads::chat_utils_rag::{run_at_commands, HasRagResults};
 
 const DEBUG: bool = true;
+
+
+pub struct DeltaSender {
+    pub role_sent: String,
+}
+
+impl DeltaSender {
+    pub fn new() -> Self {
+        DeltaSender {
+            role_sent: "".to_string(),
+        }
+    }
+
+    pub fn feed_delta(&mut self, role: &str, delta: &str, finish_reason: &str) -> serde_json::Value {
+        let x = serde_json::json!([{
+            "index": 0,
+            "delta": {
+                "role": if role != self.role_sent.as_str() { serde_json::Value::String(role.to_string()) } else { serde_json::Value::Null },
+                "content": delta
+            },
+            "finish_reason": if finish_reason == "" { serde_json::Value::Null } else { serde_json::Value::String(finish_reason.to_string()) }
+        }]);
+        self.role_sent = role.to_string();
+        x
+    }
+}
 
 
 // #[derive(Debug)]
@@ -22,7 +48,8 @@ pub struct ChatPassthrough {
     pub t: HasTokenizerAndEot,
     pub post: ChatPost,
     pub default_system_message: String,
-    pub has_vecdb_results: HasVecdbResults,
+    pub has_rag_results: HasRagResults,
+    pub delta_sender: DeltaSender,
     pub global_context: Arc<ARwLock<GlobalContext>>,
 }
 
@@ -36,7 +63,8 @@ impl ChatPassthrough {
             t: HasTokenizerAndEot::new(tokenizer),
             post,
             default_system_message: "".to_string(),
-            has_vecdb_results: HasVecdbResults::new(),
+            has_rag_results: HasRagResults::new(),
+            delta_sender: DeltaSender::new(),
             global_context,
         }
     }
@@ -59,7 +87,7 @@ impl ScratchpadAbstract for ChatPassthrough {
     ) -> Result<String, String> {
         info!("chat passthrough {} messages at start", &self.post.messages.len());
         let top_n: usize = 10;
-        let last_user_msg_starts = run_at_commands(self.global_context.clone(), self.t.tokenizer.clone(), sampling_parameters_to_patch.max_new_tokens, context_size, &mut self.post, top_n, &mut self.has_vecdb_results).await;
+        let last_user_msg_starts = run_at_commands(self.global_context.clone(), self.t.tokenizer.clone(), sampling_parameters_to_patch.max_new_tokens, context_size, &mut self.post, top_n, &mut self.has_rag_results).await;
         let limited_msgs: Vec<ChatMessage> = match limit_messages_history(&self.t, &self.post.messages, last_user_msg_starts, sampling_parameters_to_patch.max_new_tokens, context_size, &self.default_system_message) {
             Ok(res) => res,
             Err(e) => {
@@ -116,33 +144,20 @@ impl ScratchpadAbstract for ChatPassthrough {
     ) -> Result<(serde_json::Value, bool), String> {
         // info!("chat passthrough response_streaming delta={:?}, stop_toks={}, stop_length={}", delta, stop_toks, stop_length);
         let finished = stop_toks || stop_length;
-        let json_choices;
-        if finished {
-            json_choices = serde_json::json!([{
-                "index": 0,
-                "delta": {
-                    "role": "assistant",
-                    "content": delta
-                },
-                "finish_reason": serde_json::Value::String(if stop_toks { "stop".to_string() } else { "length".to_string() }),
-            }]);
+        let finish_reason = if finished {
+            if stop_toks { "stop".to_string() } else { "length".to_string() }
         } else {
-            json_choices = serde_json::json!([{
-                "index": 0,
-                "delta": {
-                    "role": "assistant",
-                    "content": delta
-                },
-                "finish_reason": serde_json::Value::Null
-            }]);
-        }
+            "".to_string()
+        };
+        let json_choices = self.delta_sender.feed_delta("assistant", &delta, &finish_reason);
         let ans = serde_json::json!({
             "choices": json_choices,
+            "object": "chat.completion.chunk",
         });
         Ok((ans, finished))
     }
 
     fn response_spontaneous(&mut self) -> Result<Vec<Value>, String>  {
-        return self.has_vecdb_results.response_streaming();
+        return self.has_rag_results.response_streaming();
     }
 }

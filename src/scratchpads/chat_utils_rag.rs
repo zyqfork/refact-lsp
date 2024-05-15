@@ -638,7 +638,7 @@ pub async fn run_at_commands(
     n_ctx: usize,
     post: &mut ChatPost,
     top_n: usize,
-    stream_back_to_user: &mut HasVecdbResults,
+    stream_back_to_user: &mut HasRagResults,
 ) -> usize {
     // TODO: don't operate on `post`, return a copy of the messages
     let context = AtCommandsContext::new(global_context.clone()).await;
@@ -685,7 +685,7 @@ pub async fn run_at_commands(
         );
 
         let (messages_for_postprocessing, _) = execute_at_commands_in_query(&mut user_posted, &context, true, top_n).await;
-        
+
         let t0 = std::time::Instant::now();
         let processed = postprocess_at_results2(
             global_context.clone(),
@@ -717,21 +717,21 @@ pub async fn run_at_commands(
 }
 
 
-pub struct HasVecdbResults {
+pub struct HasRagResults {
     pub was_sent: bool,
     pub in_json: Vec<Value>,
 }
 
-impl HasVecdbResults {
+impl HasRagResults {
     pub fn new() -> Self {
-        HasVecdbResults {
+        HasRagResults {
             was_sent: false,
             in_json: vec![],
         }
     }
 }
 
-impl HasVecdbResults {
+impl HasRagResults {
     pub fn push_in_json(&mut self, value: Value) {
         self.in_json.push(value);
     }
