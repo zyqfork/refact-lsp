@@ -1,7 +1,7 @@
 import os
 # os.environ["OPENAI_LOG"] = "debug"
 # os.environ["OPENAI_LOG_JSON"] = "true"
-from k_star_utils import ask_gpt
+import tool_ask_gpt as ask_gpt
 import asyncio
 
 

@@ -226,4 +226,6 @@ pub struct ChatPost {
     pub scratchpad: String,
     pub stream: Option<bool>,
     pub temperature: Option<f32>,
+    #[serde(default)]
+    pub tool_use: bool,
 }

@@ -4,7 +4,9 @@ use std::sync::RwLock as StdRwLock;
 use axum::Extension;
 use axum::response::Result;
 use hyper::{Body, Response, StatusCode};
+use serde_json::Value;
 use tracing::info;
+use crate::at_commands::at_commands_dict::at_commands_dicts;
 
 use crate::call_validation::ChatPost;
 use crate::caps;
@@ -72,6 +74,11 @@ pub async fn handle_v1_chat(
     ).await.map_err(|e|
         ScratchError::new(StatusCode::INTERNAL_SERVER_ERROR, format!("Prompt: {}", e))
     )?;
+    let tools_mb: Option<Vec<Value>> = if chat_post.tool_use {
+        Some(at_commands_dicts().unwrap_or_default().iter().map(|x| x.clone().into_openai_style()).collect())
+    } else {
+        None
+    };
     // info!("chat prompt {:?}\n{}", t1.elapsed(), prompt);
     info!("chat prompt {:?}", t1.elapsed());
     if chat_post.stream.is_some() && !chat_post.stream.unwrap() {
@@ -84,6 +91,7 @@ pub async fn handle_v1_chat(
             client1,
             api_key,
             &chat_post.parameters,
+            tools_mb,
         ).await
     } else {
         crate::restream::scratchpad_interaction_stream(

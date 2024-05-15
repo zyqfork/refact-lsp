@@ -26,6 +26,7 @@ pub async fn scratchpad_interaction_not_stream(
     client: reqwest::Client,
     bearer: String,
     parameters: &SamplingParameters,
+    tools_mb: Option<Vec<serde_json::Value>>,
 ) -> Result<Response<Body>, ScratchError> {
     let t2 = std::time::SystemTime::now();
     let (endpoint_style, endpoint_template, endpoint_chat_passthrough, tele_storage, slowdown_arc) = {
@@ -56,6 +57,7 @@ pub async fn scratchpad_interaction_not_stream(
             &endpoint_template,
             &endpoint_chat_passthrough,
             &parameters,
+            tools_mb,
         ).await
     }.map_err(|e| {
         tele_storage.write().unwrap().tele_net.push(telemetry_structs::TelemetryNetwork::new(

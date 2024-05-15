@@ -66,7 +66,7 @@ struct AtCommandDictDeserialize{
     parameters_required: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct AtCommandDict {
     pub name: String,
     pub description: String,

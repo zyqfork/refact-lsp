@@ -133,20 +133,21 @@ impl ScratchpadAbstract for ChatPassthrough {
         choices: Vec<String>,
         _stopped: Vec<bool>,
     ) -> Result<serde_json::Value, String> {
+        todo!();
         // detect if tool use or not
-        for choice in choices.iter() {
-            let tool = true;
-            if !tool {
-                return serde_json::json!([choice]);
-            } else {
-                for tool_json in tools.iter() {
-                    // look up the tool
-                    t_real.execute(tool_json);
-                }
-                // postprocessing
-            }
-        }
-        return serde_json::json!([]);
+        // for choice in choices.iter() {
+        //     let tool = true;
+        //     if !tool {
+        //         return serde_json::json!([choice]);
+        //     } else {
+        //         for tool_json in tools.iter() {
+        //             // look up the tool
+        //             t_real.execute(tool_json);
+        //         }
+        //         // postprocessing
+        //     }
+        // }
+        // return serde_json::json!([]);
     }
 
     fn response_streaming(
