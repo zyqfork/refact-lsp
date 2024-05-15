@@ -49,7 +49,7 @@ pub async fn handle_v1_chat(
     if chat_post.parameters.max_new_tokens == 0 {
         chat_post.parameters.max_new_tokens = 1024;
     }
-    chat_post.parameters.temperature = Some(chat_post.parameters.temperature.unwrap_or(0.2));
+    chat_post.parameters.temperature = Some(chat_post.parameters.temperature.unwrap_or(chat_post.temperature.unwrap_or(0.2)));
     chat_post.model = model_name.clone();
     let (client1, api_key) = {
         let cx_locked = global_context.write().await;
@@ -74,14 +74,27 @@ pub async fn handle_v1_chat(
     )?;
     // info!("chat prompt {:?}\n{}", t1.elapsed(), prompt);
     info!("chat prompt {:?}", t1.elapsed());
-    crate::restream::scratchpad_interaction_stream(
-        global_context.clone(),
-        scratchpad,
-        "chat-stream".to_string(),
-        prompt,
-        model_name,
-        client1,
-        api_key,
-        chat_post.parameters.clone(),
-    ).await
+    if chat_post.stream.is_some() && !chat_post.stream.unwrap() {
+        crate::restream::scratchpad_interaction_not_stream(
+            global_context.clone(),
+            scratchpad,
+            "chat".to_string(),
+            &prompt,
+            model_name,
+            client1,
+            api_key,
+            &chat_post.parameters,
+        ).await
+    } else {
+        crate::restream::scratchpad_interaction_stream(
+            global_context.clone(),
+            scratchpad,
+            "chat-stream".to_string(),
+            prompt,
+            model_name,
+            client1,
+            api_key,
+            chat_post.parameters.clone(),
+        ).await
+    }
 }

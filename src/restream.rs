@@ -85,6 +85,7 @@ pub async fn scratchpad_interaction_not_stream(
         scratchpad_result = scratchpad.response_n_choices(choices, stopped);
 
     } else if let Some(oai_choices) = model_says.get("choices") {
+        info!("oai_choices: {:?}", oai_choices);
         let choices = oai_choices.as_array().unwrap().iter()
             .map(|x| {
                 x.get("text").unwrap().as_str().unwrap().to_string()
