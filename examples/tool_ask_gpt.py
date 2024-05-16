@@ -6,7 +6,7 @@ import termcolor
 from openai import OpenAIError
 
 aclient = openai.AsyncOpenAI(
-    # base_url="http://127.0.0.1:8001/v1",
+    base_url="http://127.0.0.1:8001/v1",
     # base_url="https://openrouter.ai/api/v1",
     # api_key=getenv("OPENROUTER_API_KEY"),
     api_key=getenv("OPENAI_API_KEY"),
@@ -42,14 +42,16 @@ async def simple_ask_gpt(
                 temperature=temperature,
                 top_p=0.95,
                 stop=stop,
-                stream=False,
+                stream=True,
                 tools=tools,
                 tool_choice=tool_choice,
                 # extra_headers={
                 #     "HTTP-Referer": "https://github.com/alonsosilvaallende/chatplotlib-openrouter"
                 # }
             )
-            assert isinstance(chat_completion, openai.types.chat.chat_completion.ChatCompletion)
+            # assert isinstance(chat_completion, openai.types.chat.chat_completion.ChatCompletion)
+            async for xxx in chat_completion:
+                print(xxx)
             result = [("", "")] * len(chat_completion.choices)
             # print(chat_completion)
             for i, ch in enumerate(chat_completion.choices):

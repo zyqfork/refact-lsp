@@ -128,9 +128,9 @@ impl ScratchpadAbstract for ChatPassthrough {
         Ok(prompt.to_string())
     }
 
-    fn response_n_choices(
+    fn response_n_choices(  // old-school OpenAI
         &mut self,
-        choices: Vec<String>,
+        _choices: Vec<String>,
         _stopped: Vec<bool>,
     ) -> Result<serde_json::Value, String> {
         todo!();
@@ -156,6 +156,15 @@ impl ScratchpadAbstract for ChatPassthrough {
         stop_toks: bool,
         stop_length: bool,
     ) -> Result<(serde_json::Value, bool), String> {
+        // ChatCompletionChunk(id='chatcmpl-9PQr82sRGEXp7YaMUfK7OZlNOPYuF', choices=[Choice(delta=ChoiceDelta(content=None, function_call=None, role='assistant', tool_calls=[ChoiceDeltaToolCall(index=0, id='call_coiieM6pksUjrvo4qfLUdEFy', function=ChoiceDeltaToolCallFunction(arguments='', name='definition'), type='function')]), finish_reason=None, index=0, logprobs=None)], created=1715848462, model='gpt-3.5-turbo-0125', object='chat.completion.chunk', system_fingerprint=None)
+        // ChatCompletionChunk(id='chatcmpl-9PQr82sRGEXp7YaMUfK7OZlNOPYuF', choices=[Choice(delta=ChoiceDelta(content=None, function_call=None, role=None, tool_calls=[ChoiceDeltaToolCall(index=0, id=None, function=ChoiceDeltaToolCallFunction(arguments='{"', name=None), type=None)]), finish_reason=None, index=0, logprobs=None)], created=1715848462, model='gpt-3.5-turbo-0125', object='chat.completion.chunk', system_fingerprint=None)
+        // ChatCompletionChunk(id='chatcmpl-9PQr82sRGEXp7YaMUfK7OZlNOPYuF', choices=[Choice(delta=ChoiceDelta(content=None, function_call=None, role=None, tool_calls=[ChoiceDeltaToolCall(index=0, id=None, function=ChoiceDeltaToolCallFunction(arguments='symbol', name=None), type=None)]), finish_reason=None, index=0, logprobs=None)], created=1715848462, model='gpt-3.5-turbo-0125', object='chat.completion.chunk', system_fingerprint=None)
+        // ChatCompletionChunk(id='chatcmpl-9PQr82sRGEXp7YaMUfK7OZlNOPYuF', choices=[Choice(delta=ChoiceDelta(content=None, function_call=None, role=None, tool_calls=[ChoiceDeltaToolCall(index=0, id=None, function=ChoiceDeltaToolCallFunction(arguments='":"', name=None), type=None)]), finish_reason=None, index=0, logprobs=None)], created=1715848462, model='gpt-3.5-turbo-0125', object='chat.completion.chunk', system_fingerprint=None)
+        // ChatCompletionChunk(id='chatcmpl-9PQr82sRGEXp7YaMUfK7OZlNOPYuF', choices=[Choice(delta=ChoiceDelta(content=None, function_call=None, role=None, tool_calls=[ChoiceDeltaToolCall(index=0, id=None, function=ChoiceDeltaToolCallFunction(arguments='frog', name=None), type=None)]), finish_reason=None, index=0, logprobs=None)], created=1715848462, model='gpt-3.5-turbo-0125', object='chat.completion.chunk', system_fingerprint=None)
+        // ChatCompletionChunk(id='chatcmpl-9PQr82sRGEXp7YaMUfK7OZlNOPYuF', choices=[Choice(delta=ChoiceDelta(content=None, function_call=None, role=None, tool_calls=[ChoiceDeltaToolCall(index=0, id=None, function=ChoiceDeltaToolCallFunction(arguments='.F', name=None), type=None)]), finish_reason=None, index=0, logprobs=None)], created=1715848462, model='gpt-3.5-turbo-0125', object='chat.completion.chunk', system_fingerprint=None)
+        // ChatCompletionChunk(id='chatcmpl-9PQr82sRGEXp7YaMUfK7OZlNOPYuF', choices=[Choice(delta=ChoiceDelta(content=None, function_call=None, role=None, tool_calls=[ChoiceDeltaToolCall(index=0, id=None, function=ChoiceDeltaToolCallFunction(arguments='rog', name=None), type=None)]), finish_reason=None, index=0, logprobs=None)], created=1715848462, model='gpt-3.5-turbo-0125', object='chat.completion.chunk', system_fingerprint=None)
+        // ChatCompletionChunk(id='chatcmpl-9PQr82sRGEXp7YaMUfK7OZlNOPYuF', choices=[Choice(delta=ChoiceDelta(content=None, function_call=None, role=None, tool_calls=[ChoiceDeltaToolCall(index=0, id=None, function=ChoiceDeltaToolCallFunction(arguments='"}', name=None), type=None)]), finish_reason=None, index=0, logprobs=None)], created=1715848462, model='gpt-3.5-turbo-0125', object='chat.completion.chunk', system_fingerprint=None)
+        // ChatCompletionChunk(id='chatcmpl-9PQr82sRGEXp7YaMUfK7OZlNOPYuF', choices=[Choice(delta=ChoiceDelta(content=None, function_call=None, role=None, tool_calls=None), finish_reason='tool_calls', index=0, logprobs=None)], created=1715848462, model='gpt-3.5-turbo-0125', object='chat.completion.chunk', system_fingerprint=None)
         // info!("chat passthrough response_streaming delta={:?}, stop_toks={}, stop_length={}", delta, stop_toks, stop_length);
         let finished = stop_toks || stop_length;
         let finish_reason = if finished {

@@ -46,7 +46,7 @@ pub fn make_v1_router() -> Router {
 
         .route("/code-completion", telemetry_post!(handle_v1_code_completion_web))
         .route("/chat", telemetry_post!(handle_v1_chat))
-        .route("/chat/completions", telemetry_post!(handle_v1_chat))
+        .route("/chat/completions", telemetry_post!(handle_v1_chat))  // standard
         .route("/telemetry-network", telemetry_post!(handle_v1_telemetry_network))
         .route("/snippet-accepted", telemetry_post!(handle_v1_snippet_accepted))
 
