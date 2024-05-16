@@ -34,9 +34,24 @@ async fn _lookup_chat_scratchpad(
     Ok((model_name, sname.clone(), patch.clone(), recommended_model_record.n_ctx))
 }
 
+pub async fn handle_v1_chat_completions(
+    Extension(global_context): Extension<SharedGlobalContext>,
+    body_bytes: hyper::body::Bytes,
+) -> Result<Response<Body>, ScratchError> {
+    chat(global_context, body_bytes, Some("openai".to_string())).await
+}
+
 pub async fn handle_v1_chat(
     Extension(global_context): Extension<SharedGlobalContext>,
     body_bytes: hyper::body::Bytes,
+) -> Result<Response<Body>, ScratchError> {
+    chat(global_context, body_bytes, None).await
+}
+
+async fn chat(
+    global_context: SharedGlobalContext,
+    body_bytes: hyper::body::Bytes,
+    response_style: Option<String>,
 ) -> Result<Response<Body>, ScratchError> {
     let mut chat_post = serde_json::from_slice::<ChatPost>(&body_bytes).map_err(|e|
         ScratchError::new(StatusCode::BAD_REQUEST, format!("JSON problem: {}", e))
@@ -64,6 +79,7 @@ pub async fn handle_v1_chat(
         chat_post.clone(),
         &scratchpad_name,
         &scratchpad_patch,
+        response_style,
     ).await.map_err(|e|
         ScratchError::new(StatusCode::BAD_REQUEST, e)
     )?;
@@ -106,3 +122,4 @@ pub async fn handle_v1_chat(
         ).await
     }
 }
+

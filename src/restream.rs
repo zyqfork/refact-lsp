@@ -169,7 +169,7 @@ pub async fn scratchpad_interaction_stream(
         let mut save_url: String = String::new();
         let _ = slowdown_arc.acquire().await;
         loop {
-            {
+            if scratch.response_style().unwrap_or_default() != "openai".to_string() {
                 let value_maybe = scratch.response_spontaneous();
                 if let Ok(value) = value_maybe {
                     for el in value {

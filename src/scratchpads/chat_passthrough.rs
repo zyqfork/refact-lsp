@@ -51,6 +51,7 @@ pub struct ChatPassthrough {
     pub has_rag_results: HasRagResults,
     pub delta_sender: DeltaSender,
     pub global_context: Arc<ARwLock<GlobalContext>>,
+    pub response_style: Option<String>,
 }
 
 impl ChatPassthrough {
@@ -58,6 +59,7 @@ impl ChatPassthrough {
         tokenizer: Arc<StdRwLock<Tokenizer>>,
         post: ChatPost,
         global_context: Arc<ARwLock<GlobalContext>>,
+        response_style: Option<String>
     ) -> Self {
         ChatPassthrough {
             t: HasTokenizerAndEot::new(tokenizer),
@@ -66,6 +68,7 @@ impl ChatPassthrough {
             has_rag_results: HasRagResults::new(),
             delta_sender: DeltaSender::new(),
             global_context,
+            response_style,
         }
     }
 }
@@ -182,5 +185,8 @@ impl ScratchpadAbstract for ChatPassthrough {
 
     fn response_spontaneous(&mut self) -> Result<Vec<Value>, String>  {
         return self.has_rag_results.response_streaming();
+    }
+    fn response_style(&self) -> Option<String> {
+        self.response_style.clone()
     }
 }
