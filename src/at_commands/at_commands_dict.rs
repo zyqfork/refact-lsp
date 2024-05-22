@@ -59,7 +59,7 @@ pub const AT_COMMANDS_PARAMS: &str = r####"
 
 
 #[derive(Deserialize)]
-struct AtCommandDictDeserialize{
+pub struct AtCommandDictDeserialize {
     name: String,
     description: String,
     parameters: Vec<String>,
@@ -126,6 +126,6 @@ impl AtCommandDict {
 pub fn at_commands_dicts() -> Result<Vec<AtCommandDict>> {
     let commands_dict_raw: Vec<AtCommandDictDeserialize> = serde_json::from_str(AT_COMMANDS_DICT)?;
     let params_dict_raw: Vec<AtParamDict> = serde_json::from_str(AT_COMMANDS_PARAMS)?;
-    
+
     Ok(commands_dict_raw.iter().map(|cmd| AtCommandDict::new(cmd, &params_dict_raw)).collect::<Vec<_>>())
 }

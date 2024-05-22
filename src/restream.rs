@@ -169,20 +169,18 @@ pub async fn scratchpad_interaction_stream(
         let mut save_url: String = String::new();
         let _ = slowdown_arc.acquire().await;
         loop {
-            if scratch.response_style().unwrap_or_default() != "openai".to_string() {
-                let value_maybe = scratch.response_spontaneous();
-                if let Ok(value) = value_maybe {
-                    for el in value {
-                        let value_str = format!("data: {}\n\n", serde_json::to_string(&el).unwrap());
-                        info!("yield: {:?}", nicer_logs::first_n_chars(&value_str, 40));
-                        yield Result::<_, String>::Ok(value_str);
-                    }
-                } else {
-                    let err_str = value_maybe.unwrap_err();
-                    error!("response_spontaneous error: {}", err_str);
-                    let value_str = format!("data: {}\n\n", serde_json::to_string(&json!({"detail": err_str})).unwrap());
+            let value_maybe = scratch.response_spontaneous();
+            if let Ok(value) = value_maybe {
+                for el in value {
+                    let value_str = format!("data: {}\n\n", serde_json::to_string(&el).unwrap());
+                    info!("yield: {:?}", nicer_logs::first_n_chars(&value_str, 40));
                     yield Result::<_, String>::Ok(value_str);
                 }
+            } else {
+                let err_str = value_maybe.unwrap_err();
+                error!("response_spontaneous error: {}", err_str);
+                let value_str = format!("data: {}\n\n", serde_json::to_string(&json!({"detail": err_str})).unwrap());
+                yield Result::<_, String>::Ok(value_str);
             }
 
             let event_source_maybe = if endpoint_style == "hf" {

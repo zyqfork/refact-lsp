@@ -34,7 +34,6 @@ pub trait ScratchpadAbstract: Send {
     ) -> Result<(serde_json::Value, bool), String>;
 
     fn response_spontaneous(&mut self) -> Result<Vec<Value>, String>;
-    fn response_style(&self) -> Option<String> { None }
 }
 
 
