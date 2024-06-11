@@ -26,6 +26,7 @@ pub async fn at_tools_merged(gcx: Arc<ARwLock<GlobalContext>>) -> HashMap<String
         ("references".to_string(), Arc::new(AMutex::new(Box::new(crate::at_tools::att_ast_reference::AttAstReference{}) as Box<dyn AtTool + Send>))),
         // ("symbols_at".to_string(), Arc::new(AMutex::new(Box::new(crate::at_tools::att_ast_lookup_symbols::AttAstLookupSymbols{}) as Box<dyn AtTool + Send>))),
         ("remember_how_to_use_tools".to_string(), Arc::new(AMutex::new(Box::new(crate::at_tools::att_note_to_self::AtNoteToSelf{}) as Box<dyn AtTool + Send>))),
+        ("doc_sources_list".to_string(), Arc::new(AMutex::new(Box::new(crate::at_tools::att_doc_sources_list::AttDocSourcesList{}) as Box<dyn AtTool + Send>))),
         ("memorize_if_user_asks".to_string(), Arc::new(AMutex::new(Box::new(crate::at_tools::att_note_to_self::AtNoteToSelf{}) as Box<dyn AtTool + Send>))),
     ]);
 
@@ -118,6 +119,11 @@ tools:
     parameters_required:
       - "text"
       - "shortdesc"
+
+  - name: "doc_sources_list"
+    description: "Tool to list all of the documentation sources"
+    parameters: []
+    parameters_required: []
 "####;
 // description: "ascii_lowercase_snake_string that can be used as identifier of the topic, 2-3 words shortened to fit 25 chars, avoid generic words, especially 'tools'"
 
