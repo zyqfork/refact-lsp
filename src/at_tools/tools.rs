@@ -98,8 +98,29 @@ tools:
         description: "The exact name of a function, method, class, type alias. No spaces allowed."
     parameters_required:
       - "symbol"
+
+  - name: "patch"
+    description: "Fix, edit, create or delete a single source file. Call patch() in parallel to generate changes to several files."
+    parameters:
+      - name: "path"
+        type: "string"
+        description: "Either absolute path or preceeding_dirs/file.ext"
+      - name: "op"
+        type: "string"
+        description: "Operation on a file: 'new', 'edit', 'remove'"
+      - name: "todo"
+        type: "string"
+        description: "Describe in one paragraph what changes to the file are required."
+    parameters_required:
+      - "path"
+      - "op"
+      - "todo"
 "####;
 
+// - "lookup_definitions"
+// - name: "lookup_definitions"
+// type: "string"
+// description: "Comma separated types that might be useful in making this change"
 // - name: "remember_how_to_use_tools"
 // description: Save a note to memory.
 // parameters:

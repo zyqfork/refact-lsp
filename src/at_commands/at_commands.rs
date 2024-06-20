@@ -6,7 +6,7 @@ use tokio::sync::Mutex as AMutex;
 use tokio::sync::RwLock as ARwLock;
 
 use crate::at_tools::tools::{AtTool, at_tools_merged};
-use crate::call_validation::{ContextFile, ContextEnum};
+use crate::call_validation::{ChatMessage, ContextFile, ContextEnum};
 use crate::global_context::GlobalContext;
 
 use crate::at_commands::at_workspace::AtWorkspace;
@@ -18,23 +18,29 @@ use crate::at_commands::at_file_search::AtFileSearch;
 use crate::at_commands::at_local_notes_to_self::AtLocalNotesToSelf;
 use crate::at_commands::execute_at::AtCommandMember;
 
-
 pub struct AtCommandsContext {
     pub global_context: Arc<ARwLock<GlobalContext>>,
     pub at_commands: HashMap<String, Arc<AMutex<Box<dyn AtCommand + Send>>>>,
     pub at_tools: HashMap<String, Arc<AMutex<Box<dyn AtTool + Send>>>>,
     pub top_n: usize,
     pub is_preview: bool,
+    pub messages: Vec<ChatMessage>,
 }
 
 impl AtCommandsContext {
-    pub async fn new(global_context: Arc<ARwLock<GlobalContext>>, top_n: usize, is_preview: bool) -> Self {
+    pub async fn new(
+        global_context: Arc<ARwLock<GlobalContext>>,
+        top_n: usize,
+        is_preview: bool,
+        messages: &Vec<ChatMessage>,
+    ) -> Self {
         AtCommandsContext {
             global_context: global_context.clone(),
             at_commands: at_commands_dict(global_context.clone()).await,
             at_tools: at_tools_merged(global_context.clone()).await,
             top_n,
-            is_preview
+            is_preview,
+            messages: messages.clone(),
         }
     }
 }
