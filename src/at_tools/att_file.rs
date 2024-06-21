@@ -3,14 +3,14 @@ use async_trait::async_trait;
 use serde_json::Value;
 use crate::at_commands::at_commands::{AtCommandsContext, vec_context_file_to_context_tools};
 use crate::at_commands::at_file::{execute_at_file, text_on_clip};
-use crate::at_tools::tools::AtTool;
+use crate::at_tools::tools::Tool;
 use crate::call_validation::{ChatMessage, ContextEnum};
 
 
 pub struct AttFile;
 
 #[async_trait]
-impl AtTool for AttFile {
+impl Tool for AttFile {
     async fn execute(&self, ccx: &mut AtCommandsContext, tool_call_id: &String, args: &HashMap<String, Value>) -> Result<Vec<ContextEnum>, String> {
         let p = match args.get("path") {
             Some(Value::String(s)) => s,

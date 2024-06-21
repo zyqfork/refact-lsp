@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use tokio::sync::Mutex as AMutex;
 use tokio::sync::RwLock as ARwLock;
 
-use crate::at_tools::tools::{AtTool, at_tools_merged};
+use crate::at_tools::tools::{Tool, at_tools_merged};
 use crate::call_validation::{ChatMessage, ContextFile, ContextEnum};
 use crate::global_context::GlobalContext;
 
@@ -21,8 +21,9 @@ use crate::at_commands::execute_at::AtCommandMember;
 pub struct AtCommandsContext {
     pub global_context: Arc<ARwLock<GlobalContext>>,
     pub at_commands: HashMap<String, Arc<AMutex<Box<dyn AtCommand + Send>>>>,
-    pub at_tools: HashMap<String, Arc<AMutex<Box<dyn AtTool + Send>>>>,
+    pub at_tools: HashMap<String, Arc<AMutex<Box<dyn Tool + Send>>>>,
     pub top_n: usize,
+    #[allow(dead_code)]
     pub is_preview: bool,
     pub messages: Vec<ChatMessage>,
 }
