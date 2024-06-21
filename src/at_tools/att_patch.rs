@@ -21,7 +21,7 @@ Use this format:
 original code
 ========
 replacement code
->>>>>>>> REPLACE
+>>>>>>>> END
 
 In addition to changing the existing code, you are also responsible for adding and removing entire files.
 
@@ -38,26 +38,53 @@ To remove a file:
 "#;
 
 
+fn parse_diff_message(path: &String, content: &str) -> Result<serde_json::Value, String> {
+    let search_marker = "<<<<<<<< SEARCH";
+    let replace_marker = ">>>>>>>> END";
+    let equals_marker = "========";
+
+    let search_pos = content.find(search_marker).ok_or("SEARCH marker not found")?;
+    let replace_pos = content.find(replace_marker).ok_or("REPLACE marker not found")?;
+    let equals_pos = content.find(equals_marker).ok_or("EQUALS marker not found")?;
+
+    if search_pos >= equals_pos || equals_pos >= replace_pos {
+        return Err("Markers are in the wrong order".to_string());
+    }
+
+    let original_code = &content[search_pos + search_marker.len()..equals_pos].trim();
+    let replacement_code = &content[equals_pos + equals_marker.len()..replace_pos].trim();
+
+    let line1 = 1;
+    let line2 = 1;
+
+    let file_action = if original_code.is_empty() {
+        "new"
+    } else if replacement_code.is_empty() {
+        "remove"
+    } else {
+        "edit"
+    };
+
+    let edit_jdict = serde_json::json!({
+        "file_name": path,
+        "file_action": file_action,
+        "line1": line1,
+        "line2": line2,
+        "lines_remove": original_code,
+        "lines_add": replacement_code
+    });
+    return Ok(edit_jdict);
+}
+
+
 #[async_trait]
 impl Tool for ToolPatch {
     async fn execute(&self, ccx: &mut AtCommandsContext, tool_call_id: &String, args: &HashMap<String, Value>) -> Result<Vec<ContextEnum>, String>
     {
-        let cache_dir = {
-            let gcx_locked = ccx.global_context.read().await;
-            gcx_locked.cache_dir.clone()
-        };
-        // let notes_dir_path = cache_dir.join("notes");
-
         let path = match args.get("path") {
             Some(Value::String(s)) => s,
             Some(v) => { return Err(format!("argument `path` is not a string: {:?}", v)) },
             None => { return Err("argument `path` is not a string".to_string()) }
-        };
-
-        let op = match args.get("op") {
-            Some(Value::String(s)) => s.clone(),
-            Some(v) => { return Err(format!("argument `op` is not a string: {:?}", v)) },
-            None => { "".to_string() }
         };
 
         let todo = match args.get("todo") {
@@ -153,7 +180,6 @@ impl Tool for ToolPatch {
             format!("Network error communicating with the model (2)")
         })?;
 
-        // Object {"choices": Array [Object {"finish_reason": String("stop"), "index": Number(0), "message": Object {"content": String("<<<<<<<< SEARCH\nimport sys, impotlib, os\n========\nimport sys, importlib, os\n>>>>>>>> REPLACE"), "role": String("assistant")}}], "created": Number(1718950188), "deterministic_messages": Array [], "id": String("chatcmpl-9cRky4cbgj3iftmSgtrxDd3J9vbHv"), "metering_balance": Number(-1958602), "metering_generated_tokens_n": Number(23), "metering_prompt_tokens_n": Number(437), "model": String("gpt-3.5-turbo-0125"), "object": String("chat.completion"), "pp1000t_generated": Number(1500), "pp1000t_prompt": Number(500), "system_fingerprint": Null, "usage": Object {"completion_tokens": Number(23), "prompt_tokens": Number(437), "total_tokens": Number(460)}}
         let choices_array = match j["choices"].as_array() {
             Some(array) => array,
             None => return Err("Unable to get choices array from JSON".to_string()),
@@ -177,13 +203,52 @@ impl Tool for ToolPatch {
             None => { return Err("choice[0].message.content doesn't exist".to_string()) }
         };
 
+        info!("choice0_message_content: {:?}", choice0_message_content);
+        let mut to_parse = choice0_message_content.clone();
+        let mut chunks = vec![];
+        loop {
+            let gt_end = to_parse.find(">>>>>>>> END");
+            if gt_end.is_none() {
+                break;
+            }
+            let (eat_now, eat_later) = to_parse.split_at(gt_end.unwrap() + ">>>>>>>> END".len());
+            let edit_jdict = parse_diff_message(path, eat_now)?;
+            chunks.push(edit_jdict);
+            to_parse = eat_later.into();
+        }
+        info!("chunks: {:?}", chunks);
+        if chunks.is_empty() {
+            return Err(choice0_message_content.clone());
+        }
+
         let mut results = vec![];
         results.push(ContextEnum::ChatMessage(ChatMessage {
-            role: "tool".to_string(),
-            content: format!("{}", choice0_message_content),
+            role: "diff".to_string(),
+            content: serde_json::to_string_pretty(&chunks).unwrap(),
             tool_calls: None,
             tool_call_id: tool_call_id.clone(),
         }));
         Ok(results)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_diff_message() {
+        let input = "<<<<<<<< SEARCH\nimport sys, impotlib, os\n========\nimport sys, importlib, os\n>>>>>>>> END";
+        let expected_output = serde_json::json!({
+            "file_name": "file1.py",
+            "file_action": "edit",
+            "line1": 1,
+            "line2": 1,
+            "lines_remove": "import sys, impotlib, os",
+            "lines_add": "import sys, importlib, os"
+        });
+
+        let result = parse_diff_message(&"file1.py".to_string(), input).unwrap();
+        assert_eq!(result, expected_output);
     }
 }

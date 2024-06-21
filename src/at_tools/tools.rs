@@ -106,18 +106,18 @@ tools:
       - name: "path"
         type: "string"
         description: "Either absolute path or preceeding_dirs/file.ext"
-      - name: "op"
-        type: "string"
-        description: "Operation on a file: 'new', 'edit', 'remove'"
       - name: "todo"
         type: "string"
         description: "Describe in one paragraph what changes to the file are required."
     parameters_required:
       - "path"
-      - "op"
       - "todo"
 "####;
 
+// - "op"
+// - name: "op"
+// type: "string"
+// description: "Operation on a file: 'new', 'edit', 'remove'"
 // - "lookup_definitions"
 // - name: "lookup_definitions"
 // type: "string"
