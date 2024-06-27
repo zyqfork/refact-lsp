@@ -189,7 +189,7 @@ impl AtCommand for AtDiff {
             },
         }?;
 
-        info!("executed @diff {:?}", args);
+        info!("executed @diff {:?}", args.iter().map(|x|x.text.clone()).collect::<Vec<_>>().join(" "));
         Ok((diff_chunks.into_iter().map(ContextEnum::DiffChunk).collect(), text_on_clip(args)))
     }
 
@@ -269,7 +269,7 @@ impl AtCommand for AtDiffRev {
 
         let diff_chunks = execute_diff_with_revs(&vcs, &project_path, &rev1.text, &rev2.text, &file_path.text).await?;
 
-        info!("executed @diff-rev {:?}", args);
+        info!("executed @diff-rev {:?}", args.iter().map(|x|x.text.clone()).collect::<Vec<_>>().join(" "));
         Ok((diff_chunks.into_iter().map(ContextEnum::DiffChunk).collect(), text_on_clip(args)))
     }
 

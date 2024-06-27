@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use serde::{Deserialize, Serialize};
 use async_trait::async_trait;
+use serde_json::Value;
 use tokio::sync::RwLock as ARwLock;
 use tokio::sync::Mutex as AMutex;
 
@@ -28,7 +29,7 @@ pub async fn at_tools_merged_and_filtered(gcx: Arc<ARwLock<GlobalContext>>) -> H
         // ("remember_how_to_use_tools".to_string(), Arc::new(AMutex::new(Box::new(crate::at_tools::att_note_to_self::AtNoteToSelf{}) as Box<dyn AtTool + Send>))),
         // ("memorize_if_user_asks".to_string(), Arc::new(AMutex::new(Box::new(crate::at_tools::att_note_to_self::AtNoteToSelf{}) as Box<dyn AtTool + Send>))),
         ("patch".to_string(), Arc::new(AMutex::new(Box::new(crate::at_tools::att_patch::ToolPatch{}) as Box<dyn Tool + Send>))),
-        ("diff".to_string(), Arc::new(AMutex::new(Box::new(crate::at_tools::att_diff::AttDiff{}) as Box<dyn AtTool + Send>))),
+        ("diff".to_string(), Arc::new(AMutex::new(Box::new(crate::at_tools::att_diff::AttDiff{}) as Box<dyn Tool + Send>))),
     ]);
 
     let (ast_on, vecdb_on) = {

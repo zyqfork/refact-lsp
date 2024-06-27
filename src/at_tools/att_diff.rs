@@ -6,14 +6,14 @@ use async_trait::async_trait;
 use crate::at_commands::at_commands::AtCommandsContext;
 use crate::at_commands::at_diff::{execute_diff_for_vcs, text_on_clip, last_accessed_project};
 use crate::at_commands::execute_at::AtCommandMember;
-use crate::at_tools::tools::AtTool;
+use crate::at_tools::tools::Tool;
 use crate::call_validation::{ChatMessage, ContextEnum};
 
 
 pub struct AttDiff;
 
 #[async_trait]
-impl AtTool for AttDiff {
+impl Tool for AttDiff {
     async fn execute(&self, ccx: &mut AtCommandsContext, tool_call_id: &String, args: &HashMap<String, Value>) -> Result<Vec<ContextEnum>, String> {
         let project_path = last_accessed_project(ccx).await?;
         let diff_chunks = match args.len() {
